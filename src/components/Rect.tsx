@@ -1,9 +1,15 @@
+import { Table, TableBody, TableCell, TableRow } from "@mui/material";
+import { Container } from "@mui/system";
 import { KonvaEventObject } from "konva/lib/Node";
-import React from "react";
+import React, { useEffect } from "react";
 import { Circle, Layer, Rect, Stage, Transformer } from "react-konva";
 import { v4 as uuid } from 'uuid';
 import { rectangleFill, rectangleOutline } from "../constants/style_constants";
 import { ICircle, IRectangle } from "../models/IShapes";
+import { Document, Page } from 'react-pdf';
+import axios from "axios";
+import { Files } from "../models/IFiles";
+
 
 interface RectangleProps {
     shapeProps: IRectangle;
@@ -28,7 +34,7 @@ const Rectangle = (rectangleProps: RectangleProps) => {
         y: Math.min(shapeProps.y, shapeProps.y + shapeProps.height),
         fill: '#B71C1C',
         visible: true,
-        width: 30, height: 30,
+        width: 20, height: 20,
         id: shapeProps.id,
     }
     React.useEffect(() => {
@@ -62,7 +68,7 @@ const Rectangle = (rectangleProps: RectangleProps) => {
                         y: Math.max(50, e.target.y()),
                     });
                 }}
-                onTransform={(e)=>circleProps.visible=false}
+                onTransformStart={(e) => circleProps.visible = false}
                 onTransformEnd={(e) => {
                     // transformer is changing scale of the node
                     // and NOT its width or height
@@ -118,16 +124,26 @@ var initialRectangles: Array<IRectangle> = [
     }
 ];
 
-
-const DrawRect = () => {
+interface Props {
+    fileId: string,
+}
+const DrawRect = (props: Props) => {
     const [rectangles, setRectangles] = React.useState(initialRectangles);
     const [selectedId, selectShape] = React.useState<string | null>(null);
 
     const [isDrawing, setIsDrawing] = React.useState<boolean>(false);
     const [newRect, setNewRect] = React.useState<Array<IRectangle>>([])
+    const [file, setFile] = React.useState<Files>();
 
     const startX = React.useRef<number | null>(null);
     const startY = React.useRef<number | null>(null);
+
+    useEffect(() => {
+        axios.get<Files>('http://localhost:8080/findFile', { params: { 'id': props.fileId } }).then(response => {
+            setFile(response.data);
+            console.log(response.data.id)
+        })
+    }, [])
 
     const checkDeselect = (e: KonvaEventObject<MouseEvent>) => {
         // deselect when clicked on empty area
@@ -181,34 +197,55 @@ const DrawRect = () => {
 
     const rectanglesToDraw = [...rectangles, ...newRect];
     return (
-        <Stage
-            width={window.innerWidth}
-            height={window.innerHeight}
-            onMouseDown={checkDeselect}
-            onMouseMove={onMouseMove}
-            onMouseUp={stopDrawing}>
-            <Layer>
-                {
-                    rectanglesToDraw.map((rect, i) => {
-                        return (
-                            <Rectangle
-                                key={i}
-                                shapeProps={rect}
-                                isSelected={rect.id === selectedId}
-                                onSelect={() => {
-                                    selectShape(rect.id);
-                                }}
-                                onChange={(newAttrs: IRectangle) => {
-                                    const rects = rectangles.slice();
-                                    rects[i] = newAttrs;
-                                    setRectangles(rects);
-                                }}
-                                removeRect={removeRect}
-                            />
-                        );
-                    })}
-            </Layer>
-        </Stage>
+        <Container maxWidth="lg">
+            <Table sx={{ padding: 0, width: '100%' }}>
+                <TableBody>
+                    <TableRow>
+                        <TableCell sx={{ borderRight: '2px solid', }}>
+                            Tools
+                        </TableCell>
+                        <TableCell sx={{ borderRight: '2px solid blue', }}>
+                            {file ? <Document file={new Uint8Array(file.document.fileContent)}>
+                                {/* <Page pageNumber={1} /> */}
+                            </Document> : undefined}
+
+                            <Stage
+                                // className="left-0 right-0 top-0 absolute"
+                                width={window.innerWidth * 0.5}
+                                height={window.innerHeight}
+                                onMouseDown={checkDeselect}
+                                onMouseMove={onMouseMove}
+                                onMouseUp={stopDrawing}>
+                                <Layer>
+                                    {
+                                        rectanglesToDraw.map((rect, i) => {
+                                            return (
+                                                <Rectangle
+                                                    key={i}
+                                                    shapeProps={rect}
+                                                    isSelected={rect.id === selectedId}
+                                                    onSelect={() => {
+                                                        selectShape(rect.id);
+                                                    }}
+                                                    onChange={(newAttrs: IRectangle) => {
+                                                        const rects = rectangles.slice();
+                                                        rects[i] = newAttrs;
+                                                        setRectangles(rects);
+                                                    }}
+                                                    removeRect={removeRect}
+                                                />
+                                            );
+                                        })}
+                                </Layer>
+                            </Stage>
+                        </TableCell>
+                        <TableCell sx={{ borderRight: '2px solid', }}>
+                            fjdslk
+                        </TableCell>
+                    </TableRow>
+                </TableBody>
+            </Table >
+        </Container >
     );
 }
 export default DrawRect;
