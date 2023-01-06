@@ -6,7 +6,7 @@ import { Circle, Layer, Rect, Stage, Transformer } from "react-konva";
 import { v4 as uuid } from 'uuid';
 import { rectangleFill, rectangleOutline } from "../constants/style_constants";
 import { ICircle, IRectangle } from "../models/IShapes";
-import { Document, Page } from 'react-pdf';
+import { Document, Page, pdfjs } from 'react-pdf';
 import axios from "axios";
 import { Files } from "../models/IFiles";
 
@@ -114,14 +114,14 @@ const Rectangle = (rectangleProps: RectangleProps) => {
     );
 };
 var initialRectangles: Array<IRectangle> = [
-    {
-        x: 10,
-        y: 10,
-        width: 100,
-        height: 100,
-        fill: rectangleFill,
-        id: 'rect1',
-    }
+    // {
+    //     x: 10,
+    //     y: 10,
+    //     width: 100,
+    //     height: 100,
+    //     fill: rectangleFill,
+    //     id: 'rect1',
+    // }
 ];
 
 interface Props {
@@ -134,14 +134,17 @@ const DrawRect = (props: Props) => {
     const [isDrawing, setIsDrawing] = React.useState<boolean>(false);
     const [newRect, setNewRect] = React.useState<Array<IRectangle>>([])
     const [file, setFile] = React.useState<Files>();
+    const [downloadedPDF, setDownloadedPDF] = React.useState<string>('');
 
     const startX = React.useRef<number | null>(null);
     const startY = React.useRef<number | null>(null);
 
     useEffect(() => {
+        pdfjs.GlobalWorkerOptions.workerSrc =
+            `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
         axios.get<Files>('http://localhost:8080/findFile', { params: { 'id': props.fileId } }).then(response => {
             setFile(response.data);
-            console.log(response.data.id)
+            setDownloadedPDF(response.data.document.fileContent)
         })
     }, [])
 
@@ -205,39 +208,42 @@ const DrawRect = (props: Props) => {
                             Tools
                         </TableCell>
                         <TableCell sx={{ borderRight: '2px solid blue', }}>
-                            {file ? <Document file={new Uint8Array(file.document.fileContent)}>
-                                {/* <Page pageNumber={1} /> */}
-                            </Document> : undefined}
+                            <Document
+                                file={`data:application/pdf;base64,${downloadedPDF}`}>
+                                <div style={{ userSelect: 'none' }}>
+                                    <Page pageNumber={1} />
+                                    <Stage
+                                        style={{ backgroundColor: 'transparent' }}
+                                        width={window.innerWidth * 0.5}
+                                        height={window.innerHeight}
+                                        onMouseDown={checkDeselect}
+                                        onMouseMove={onMouseMove}
+                                        onMouseUp={stopDrawing}>
+                                        <Layer>
+                                            {
+                                                rectanglesToDraw.map((rect, i) => {
+                                                    return (
+                                                        <Rectangle
+                                                            key={i}
+                                                            shapeProps={rect}
+                                                            isSelected={rect.id === selectedId}
+                                                            onSelect={() => {
+                                                                selectShape(rect.id);
+                                                            }}
+                                                            onChange={(newAttrs: IRectangle) => {
+                                                                const rects = rectangles.slice();
+                                                                rects[i] = newAttrs;
+                                                                setRectangles(rects);
+                                                            }}
+                                                            removeRect={removeRect}
+                                                        />
+                                                    );
+                                                })}
 
-                            <Stage
-                                // className="left-0 right-0 top-0 absolute"
-                                width={window.innerWidth * 0.5}
-                                height={window.innerHeight}
-                                onMouseDown={checkDeselect}
-                                onMouseMove={onMouseMove}
-                                onMouseUp={stopDrawing}>
-                                <Layer>
-                                    {
-                                        rectanglesToDraw.map((rect, i) => {
-                                            return (
-                                                <Rectangle
-                                                    key={i}
-                                                    shapeProps={rect}
-                                                    isSelected={rect.id === selectedId}
-                                                    onSelect={() => {
-                                                        selectShape(rect.id);
-                                                    }}
-                                                    onChange={(newAttrs: IRectangle) => {
-                                                        const rects = rectangles.slice();
-                                                        rects[i] = newAttrs;
-                                                        setRectangles(rects);
-                                                    }}
-                                                    removeRect={removeRect}
-                                                />
-                                            );
-                                        })}
-                                </Layer>
-                            </Stage>
+                                        </Layer>
+                                    </Stage>
+                                </div>
+                            </Document>
                         </TableCell>
                         <TableCell sx={{ borderRight: '2px solid', }}>
                             fjdslk

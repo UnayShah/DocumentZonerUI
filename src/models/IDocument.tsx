@@ -7,5 +7,5 @@ export interface Document{
     documentName: string,
     actualDocumentName: string,
     extension: string,
-    fileContent: ArrayBuffer;
+    fileContent: string;
 }
