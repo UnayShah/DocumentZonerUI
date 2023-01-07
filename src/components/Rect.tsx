@@ -1,5 +1,4 @@
 import { Table, TableBody, TableCell, TableRow } from "@mui/material";
-import { Container } from "@mui/system";
 import { KonvaEventObject } from "konva/lib/Node";
 import React, { useEffect } from "react";
 import { Circle, Layer, Rect, Stage, Transformer } from "react-konva";
@@ -9,6 +8,8 @@ import { ICircle, IRectangle } from "../models/IShapes";
 import { Document, Page, pdfjs } from 'react-pdf';
 import axios from "axios";
 import { Files } from "../models/IFiles";
+import RectDetails from "./RectDetails";
+import { Box } from "@mui/system";
 
 
 interface RectangleProps {
@@ -133,7 +134,6 @@ const DrawRect = (props: Props) => {
 
     const [isDrawing, setIsDrawing] = React.useState<boolean>(false);
     const [newRect, setNewRect] = React.useState<Array<IRectangle>>([])
-    const [file, setFile] = React.useState<Files>();
     const [downloadedPDF, setDownloadedPDF] = React.useState<string>('');
 
     const startX = React.useRef<number | null>(null);
@@ -141,12 +141,11 @@ const DrawRect = (props: Props) => {
 
     useEffect(() => {
         pdfjs.GlobalWorkerOptions.workerSrc =
-            `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
+            `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.js`;
         axios.get<Files>('http://localhost:8080/findFile', { params: { 'id': props.fileId } }).then(response => {
-            setFile(response.data);
             setDownloadedPDF(response.data.document.fileContent)
-        })
-    }, [])
+        });
+    })
 
     const checkDeselect = (e: KonvaEventObject<MouseEvent>) => {
         // deselect when clicked on empty area
@@ -192,7 +191,14 @@ const DrawRect = (props: Props) => {
         setIsDrawing(false)
         if (newRect[0] && (newRect[0].height !== 0 || newRect[0].width !== 0)) {
             newRect[0].id = uuid()
-            console.log(newRect[0].id)
+            if (newRect[0].width < 0) {
+                newRect[0].x = newRect[0].x + newRect[0].width;
+                newRect[0].width = -newRect[0].width
+            }
+            if (newRect[0].height < 0) {
+                newRect[0].y = newRect[0].y + newRect[0].height;
+                newRect[0].height = -newRect[0].height
+            }
             rectangles.push(newRect[0])
         }
         newRect.pop()
@@ -200,20 +206,22 @@ const DrawRect = (props: Props) => {
 
     const rectanglesToDraw = [...rectangles, ...newRect];
     return (
-        <Container maxWidth="lg">
-            <Table sx={{ padding: 0, width: '100%' }}>
+        <div >
+            <Table sx={{ padding: 0, width: '100%', }}>
                 <TableBody>
                     <TableRow>
                         <TableCell sx={{ borderRight: '2px solid', }}>
                             Tools
                         </TableCell>
-                        <TableCell sx={{ borderRight: '2px solid blue', }}>
-                            <Document
-                                file={`data:application/pdf;base64,${downloadedPDF}`}>
-                                <div style={{ userSelect: 'none' }}>
-                                    <Page pageNumber={1} />
+                        <TableCell >
+                            <div
+                                className="border-2 border-green-500">
+
+                                <Document
+                                    file={`data:application/pdf;base64,${downloadedPDF}`}>
+                                    <Page pageNumber={2} />
                                     <Stage
-                                        style={{ backgroundColor: 'transparent' }}
+                                        style={{ position: 'absolute', top: 0 }}
                                         width={window.innerWidth * 0.5}
                                         height={window.innerHeight}
                                         onMouseDown={checkDeselect}
@@ -239,19 +247,30 @@ const DrawRect = (props: Props) => {
                                                         />
                                                     );
                                                 })}
-
                                         </Layer>
                                     </Stage>
-                                </div>
-                            </Document>
+                                </Document>
+                            </div>
                         </TableCell>
-                        <TableCell sx={{ borderRight: '2px solid', }}>
-                            fjdslk
+                        <TableCell sx={{ display: 'table-cell', verticalAlign: 'top', border: 'none', borderLeft:'2px gray solid'}}>
+                            {
+                                rectangles.length ?
+                                    rectanglesToDraw.map((rect, i) => {
+                                        return (
+                                            <RectDetails key={rect.id} rectangle={rect} title={rect.id} />
+                                        );
+                                    }) :
+                                    (<Box>
+                                        <h2>
+                                            No zones drawn
+                                        </h2>
+                                    </Box>)
+                            }
                         </TableCell>
                     </TableRow>
                 </TableBody>
             </Table >
-        </Container >
+        </div >
     );
 }
 export default DrawRect;
