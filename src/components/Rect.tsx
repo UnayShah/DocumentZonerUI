@@ -97,7 +97,7 @@ const Rectangle = (rectangleProps: RectangleProps) => {
             />
             <Circle
                 {...circleProps}
-                visible={circleProps.visible}
+                // visible={circleProps.visible}
                 onClick={() => removeRect(shapeProps.id)} />
             {isSelected && (
                 <Transformer
@@ -156,7 +156,7 @@ const DrawRect = (props: Props) => {
             if (stage !== null) {
                 startX.current = stage.getRelativePointerPosition().x;
                 startY.current = stage.getRelativePointerPosition().y;
-                setNewRect([{ x: startX.current, y: startY.current, width: 0, height: 0, fill: 'gray', id: 'newRect' }])
+                setNewRect([{ x: startX.current, y: startY.current, width: 0, height: 0, fill: 'gray', id: uuid(), title: '' }])
                 selectShape(null);
             }
         }
@@ -174,11 +174,21 @@ const DrawRect = (props: Props) => {
                     y: startY.current,
                     width: newMouseX - startX.current,
                     height: newMouseY - startY.current,
-                    fill: rectangleFill, id: 'newRect'
+                    fill: rectangleFill, id: newRect[0].id,
+                    title: ' ',
                 }])
             }
         }
+    }
 
+    const setFieldTitle = (index: number, id: string, title: string) => {
+        var tempRectangles = rectangles;
+        console.log(title, rectangles.length > index && rectangles[index].id === id)
+        if (rectangles.length > index && rectangles[index].id === id) {
+            console.log('made tetfield', title)
+            tempRectangles[index].title = title;
+            setRectangles(tempRectangles)
+        }
     }
 
     const removeRect = (id: string) => {
@@ -190,7 +200,7 @@ const DrawRect = (props: Props) => {
     const stopDrawing = (e: any) => {
         setIsDrawing(false)
         if (newRect[0] && (newRect[0].height !== 0 || newRect[0].width !== 0)) {
-            newRect[0].id = uuid()
+            // newRect[0].id = uuid()
             if (newRect[0].width < 0) {
                 newRect[0].x = newRect[0].x + newRect[0].width;
                 newRect[0].width = -newRect[0].width
@@ -252,12 +262,12 @@ const DrawRect = (props: Props) => {
                                 </Document>
                             </div>
                         </TableCell>
-                        <TableCell sx={{ display: 'table-cell', verticalAlign: 'top', border: 'none', borderLeft:'2px gray solid'}}>
+                        <TableCell sx={{ display: 'table-cell', verticalAlign: 'top', border: 'none', borderLeft: '2px gray solid' }}>
                             {
                                 rectangles.length ?
                                     rectanglesToDraw.map((rect, i) => {
                                         return (
-                                            <RectDetails key={rect.id} rectangle={rect} title={rect.id} />
+                                            <RectDetails key={rect.id} id={rect.id} rectangle={rect} title={rect.title} setFieldTitle={setFieldTitle} index={i} />
                                         );
                                     }) :
                                     (<Box>

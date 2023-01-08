@@ -5,6 +5,7 @@ export interface IRectangle {
     height: number
     fill: string
     id: string
+    title: string
 }
 export interface ICircle {
     x: number

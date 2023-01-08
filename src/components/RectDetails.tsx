@@ -1,13 +1,18 @@
-import { Table, TableBody, TableCell, TableHead, TableRow } from "@mui/material"
+import { CancelRounded, DoneRounded } from "@mui/icons-material"
+import { IconButton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from "@mui/material"
 import { Key, useEffect } from "react"
 import { IRectangle } from "../models/IShapes"
 
 interface Props {
     title?: string,
-    rectangle?: IRectangle
+    rectangle?: IRectangle,
+    setFieldTitle?: any,
+    index?: number,
+    id: string,
     key: Key,
 }
 const RectDetails = (props: Props) => {
+
     useEffect(() => {
         if (props.rectangle && props.title) {
             if (props.rectangle.width < 0) {
@@ -27,6 +32,23 @@ const RectDetails = (props: Props) => {
                     <TableRow>
                         <TableCell colSpan={2}>
                             {props.title}
+                            {/* <div onDoubleClick={}> */}
+
+                            <TextField
+                                value={props.title}
+                                onChange={e => props.setFieldTitle(props.index, props.id, e.target.value)}
+                                InputProps={{
+                                    endAdornment: (
+                                        <div className="flex flex-row">
+                                            <IconButton onClick={e => {
+                                                console.log('cancel')
+                                                props.setFieldTitle(props.index, props.id, ' ')
+                                            }}><CancelRounded /></IconButton>
+                                            {/* <IconButton onClick={props.setFieldTitle(props.id, '')}><DoneRounded /></IconButton> */}
+                                        </div>
+                                    )
+                                }} />
+                            {/* </div> */}
                         </TableCell>
                     </TableRow>
                 </TableHead>
