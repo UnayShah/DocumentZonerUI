@@ -1,6 +1,6 @@
 import { CancelRounded, DoneRounded } from "@mui/icons-material"
 import { IconButton, Table, TableBody, TableCell, TableHead, TableRow, TextField } from "@mui/material"
-import { Key, useEffect } from "react"
+import React, { Key, useEffect } from "react"
 import { IRectangle } from "../models/IShapes"
 
 interface Props {
@@ -12,6 +12,8 @@ interface Props {
     key: Key,
 }
 const RectDetails = (props: Props) => {
+    const [title, setFieldTitle] = React.useState<string>(props.title ? props.title : '');
+    const [editTitle, setEditTitle] = React.useState<boolean>(true);
 
     useEffect(() => {
         if (props.rectangle && props.title) {
@@ -25,29 +27,38 @@ const RectDetails = (props: Props) => {
             }
         }
     }, [])
+
+    const fieldTitleChange = (titleValue: string) => {
+        setFieldTitle(titleValue)
+        props.setFieldTitle(props.index, props.id, titleValue)
+    }
     return (
         props.rectangle && props.title ?
             <Table>
                 <TableHead sx={{ borderBottom: '2px solid gray' }}>
                     <TableRow>
                         <TableCell colSpan={2}>
-                            {props.title}
-                            {/* <div onDoubleClick={}> */}
+                            {editTitle ?
+                                // {/* <div onDoubleClick={}> */ }
 
-                            <TextField
-                                value={props.title}
-                                onChange={e => props.setFieldTitle(props.index, props.id, e.target.value)}
-                                InputProps={{
-                                    endAdornment: (
-                                        <div className="flex flex-row">
-                                            <IconButton onClick={e => {
-                                                console.log('cancel')
-                                                props.setFieldTitle(props.index, props.id, ' ')
-                                            }}><CancelRounded /></IconButton>
-                                            {/* <IconButton onClick={props.setFieldTitle(props.id, '')}><DoneRounded /></IconButton> */}
-                                        </div>
-                                    )
-                                }} />
+                                < TextField value={title}
+                                    onChange={e => fieldTitleChange(e.target.value)}
+                                    InputProps={{
+                                        endAdornment: (
+                                            <div className="flex flex-row">
+                                                <IconButton onClick={e => {
+                                                    fieldTitleChange('')
+                                                }}><CancelRounded /></IconButton>
+                                                <IconButton onClick={e => props.rectangle && props.rectangle.title.length ? setEditTitle(false) : setEditTitle(true)}>
+                                                    <DoneRounded />
+                                                </IconButton>
+                                            </div>
+                                        )
+                                    }} /> :
+                                <div onDoubleClick={e => setEditTitle(true)}>
+                                    {props.rectangle.title}
+                                </div>
+                            }
                             {/* </div> */}
                         </TableCell>
                     </TableRow>

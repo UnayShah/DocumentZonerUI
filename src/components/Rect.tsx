@@ -182,11 +182,15 @@ const DrawRect = (props: Props) => {
     }
 
     const setFieldTitle = (index: number, id: string, title: string) => {
+        // setRectangles({
+        //     ...rectangles,
+        //     [rectangles[index].title]: title
+        // })
         var tempRectangles = rectangles;
         console.log(title, rectangles.length > index && rectangles[index].id === id)
         if (rectangles.length > index && rectangles[index].id === id) {
-            console.log('made tetfield', title)
             tempRectangles[index].title = title;
+            console.log('made tetfield', title, tempRectangles[index].title)
             setRectangles(tempRectangles)
         }
     }
